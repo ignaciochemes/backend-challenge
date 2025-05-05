@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
-import { AppModule } from './app.module';
+import { AppModule } from './AppModule';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);

@@ -5,7 +5,7 @@ export const envModelTransformer = (envs: any) => ({
     PORT: Number(envs.PORT) || 33000,
     DATABASE: {
         host: envs.DATABASE_HOST,
-        port: Number(envs.DATABASE_PORT) || 3307,
+        port: Number(envs.DATABASE_PORT) || 5432,
         username: envs.DATABASE_USER,
         password: envs.DATABASE_PASS,
         database: envs.DATABASE_NAME,

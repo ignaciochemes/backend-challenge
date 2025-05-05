@@ -1,4 +1,4 @@
-import EnumEnv from './EnumEnv';
+import EnumEnv from '../Enums/EnvEnum';
 
 export const envFilePathConfiguration = (): string => {
     console.log(`Entorno - ${process.env.BC_ENV}`);
