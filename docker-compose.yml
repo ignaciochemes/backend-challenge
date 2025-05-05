@@ -1,0 +1,24 @@
+version: '3'
+
+services:
+    postgres:
+        image: "postgres:17.4"
+        container_name: backend-challenge-postgres
+        environment:
+            - POSTGRES_USER=backend-challenge
+            - POSTGRES_PASSWORD=backend-challenge
+            - POSTGRES_DB=backend-challenge
+            - POSTGRES_PORT=5432
+        ports:
+            - 5432:5432
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD", "pg_isready", "-U", "backend-challenge"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
