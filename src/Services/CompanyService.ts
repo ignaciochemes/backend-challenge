@@ -114,7 +114,6 @@ export class CompanyService {
      * @returns Sanitized input
     */
     private _sanitizeInput(input: string): string {
-        // Basic sanitization
         return input
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
