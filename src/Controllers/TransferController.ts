@@ -3,6 +3,7 @@ import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/
 import ResponseFormatter from "src/Helpers/Formatter/ResponseFormatter";
 import { LoggingInterceptor } from "src/Helpers/Interceptors/LogginInterceptor";
 import { CreateTransferRequestDto } from "src/Models/Request/TransferController/CreateTransferRequestDto";
+import { FindTransferQueryRequest } from "src/Models/Request/TransferController/FindTransferQueryRequest";
 import { CompanyResponseDto } from "src/Models/Response/CompanyController/CompanyResponseDto";
 import GenericResponse from "src/Models/Response/GenericResponse";
 import { TransferResponseDto } from "src/Models/Response/TransferController/TransferResponseDto";
@@ -36,10 +37,9 @@ export class TransferController {
     @ApiResponse({ status: HttpStatus.OK, description: 'Transfers retrieved successfully' })
     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No transfers found' })
     async findAll(
-        @Query('page') page: number = 1,
-        @Query('limit') limit: number = 10
+        @Query() query: FindTransferQueryRequest,
     ): Promise<ResponseFormatter<TransferResponseDto[]>> {
-        const response: TransferResponseDto[] = await this._transferService.findAll();
+        const response: TransferResponseDto[] = await this._transferService.findAll(query);
         return ResponseFormatter.create<TransferResponseDto[]>(response);
     };
 

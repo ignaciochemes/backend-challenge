@@ -26,14 +26,18 @@ export class TransferDao {
     * @param take Number of records to take
     * @returns List of transfers
     */
-    async findAll(skip = 0, take = 10): Promise<Transfer[]> {
+    async findAll(
+        page: number = 0,
+        limit: number = 10
+    ): Promise<Transfer[]> {
+        console.log(`Page: ${page}, Limit: ${limit}`);
         const query = await this.transferRepository
             .createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.deleted_at IS NULL')
             .orderBy('transfer.created_at', 'DESC')
-            .skip(skip)
-            .take(take)
+            .skip(page * limit)
+            .take(limit)
             .getMany();
         return query;
     }

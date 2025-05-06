@@ -19,7 +19,7 @@ export class Transfer extends GenericTable {
         scale: 2,
         default: 0,
         transformer: {
-            to: (value: number) => Math.abs(value), // Nos aseguramos de que el valor sea positivo
+            to: (value: number) => Math.abs(value),
             from: (value: string) => parseFloat(value)
         }
     })

@@ -10,6 +10,7 @@ import { CompanyDao } from 'src/Daos/CompanyDao';
 import GenericResponse from 'src/Models/Response/GenericResponse';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { FindTransferQueryRequest } from 'src/Models/Request/TransferController/FindTransferQueryRequest';
 
 
 @Injectable()
@@ -79,12 +80,11 @@ export class TransferService {
     * @param limit Results per page (default: 10)
     * @returns List of transfer DTOs
     */
-    async findAll(page = 1, limit = 10): Promise<TransferResponseDto[]> {
-        this._logger.log(`Fetching all transfers - page: ${page}, limit: ${limit}`);
+    async findAll(query: FindTransferQueryRequest): Promise<TransferResponseDto[]> {
+        this._logger.log(`Fetching all transfers - page: ${query.page}, limit: ${query.limit}`);
         try {
-            const skip = (page - 1) * limit;
-            const transfers: Transfer[] = await this._transferDao.findAll(skip, limit);
-
+            const transfers: Transfer[] = await this._transferDao.findAll(query.page, query.limit);
+            console.log(transfers);
             if (!transfers || transfers.length === 0) {
                 throw new HttpCustomException('No transfers found', StatusCodeEnums.NOT_TRANSFERS_FOUND);
             }

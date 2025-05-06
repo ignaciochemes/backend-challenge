@@ -25,14 +25,6 @@ export class CompanyService {
     */
     async createCompany(data: CreateCompanyRequestDto): Promise<GenericResponse> {
         this._logger.log(`Starting company creation process for CUIT: ${data.cuit}`);
-        if (!this._isValidCuit(data.cuit)) {
-            throw new HttpCustomException(
-                'Invalid CUIT format',
-                StatusCodeEnums.COMPANY_NOT_FOUND,
-                'Invalid Input',
-                { cuit: 'CUIT must follow the correct format and checksum validation' }
-            );
-        }
         const formattedCuit = this._formatCuit(data.cuit);
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.connect();
@@ -111,17 +103,38 @@ export class CompanyService {
      * @returns true if valid, false otherwise
     */
     private _isValidCuit(cuit: string): boolean {
+        // Clean the CUIT by removing non-digit characters
+        console.log(`Validating CUIT: ${cuit}`);
         const cleanCuit = cuit.replace(/\D/g, '');
+        console.log(`Cleaned CUIT: ${cleanCuit}`);
         if (!/^(20|23|24|25|26|27|30|33|34)\d{9}$/.test(cleanCuit)) {
             return false;
         }
+
+        // Get the digits
         const digits = cleanCuit.split('').map(Number);
-        const checksum = digits.pop();
-        const sum = digits.reduce((acc, digit, index) => {
-            return acc + digit * (2 + (digits.length - index - 1) % 9);
-        }, 0);
-        const calculatedChecksum = (11 - (sum % 11)) % 11;
-        return calculatedChecksum === checksum;
+        const checkDigit = digits.pop();
+
+        // Apply multipliers
+        const multipliers = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
+        let sum = 0;
+        for (let i = 0; i < digits.length; i++) {
+            sum += digits[i] * multipliers[i];
+        }
+
+        // Calculate expected check digit
+        const remainder = sum % 11;
+        let calculatedCheckDigit;
+
+        if (remainder === 0) {
+            calculatedCheckDigit = 0;
+        } else if (remainder === 1) {
+            calculatedCheckDigit = 9; // Special case for CUIT
+        } else {
+            calculatedCheckDigit = 11 - remainder;
+        }
+
+        return calculatedCheckDigit === checkDigit;
     }
 
     /**
@@ -131,6 +144,7 @@ export class CompanyService {
     */
     private _formatCuit(cuit: string): string {
         const cleanCuit = cuit.replace(/\D/g, '');
+        console.log(`Original CUIT: ${cuit}, Cleaned CUIT: ${cleanCuit}`);
         return `${cleanCuit.substring(0, 2)}-${cleanCuit.substring(2, 10)}-${cleanCuit.substring(10, 11)}`;
     }
 

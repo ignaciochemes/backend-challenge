@@ -1,15 +1,11 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, Length, Matches, Validate } from "class-validator";
-import { CuitValidator } from "src/Helpers/Utils/CuitValidator";
+import { IsEmail, IsNotEmpty, IsOptional, IsString, Length, Matches } from "class-validator";
 
 export class CreateCompanyRequestDto {
 
     @IsNotEmpty({ message: 'CUIT is required' })
     @IsString({ message: 'CUIT must be a string' })
-    @Matches(/^(20|23|24|25|26|27|30|33|34)(\d{9})$/, {
-        message: 'CUIT must follow the pattern: 2X-XXXXXXXX-X or 3X-XXXXXXXX-X',
-    })
-    @Validate(CuitValidator, {
-        message: 'CUIT is invalid or has an incorrect checksum',
+    @Matches(/^(20|23|24|25|26|27|30|33|34)(-\d{8}-\d{1}|\d{9})$/, {
+        message: 'CUIT must follow the pattern: 2X-XXXXXXXX-X or 3XXXXXXXXX',
     })
     readonly cuit: string;
 
