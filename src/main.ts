@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AppModule } from './AppModule';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -21,6 +22,13 @@ async function bootstrap() {
     app.enableCors({
         origin: '*',
     });
+    const config = new DocumentBuilder()
+        .setTitle('Backend Challenge API')
+        .setDescription('API documentation for the backend challenge')
+        .setVersion('1.0')
+        .build();
+    const documentFactory = () => SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, documentFactory);
     await app.listen(configService.get<string>('PORT') || 33000);
 }
 bootstrap();

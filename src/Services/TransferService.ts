@@ -11,6 +11,10 @@ import GenericResponse from 'src/Models/Response/GenericResponse';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { FindTransferQueryRequest } from 'src/Models/Request/TransferController/FindTransferQueryRequest';
+import { IPaginationMetadata } from 'src/Interfaces/PaginationMetadata';
+import { PaginatedResponseDto } from 'src/Models/Response/PaginatedResponseDto';
+import { Company } from 'src/Models/Entities/CompanyEntity';
+import { TransferStatus } from 'src/Enums/TransferStatusEnum';
 
 
 @Injectable()
@@ -49,6 +53,11 @@ export class TransferService {
             newTransfer.setDebitAccount(this._sanitizeAccountNumber(createTransferDto.debitAccount));
             newTransfer.setCreditAccount(this._sanitizeAccountNumber(createTransferDto.creditAccount));
             newTransfer.setTransferDate(new Date());
+            newTransfer.setStatus(createTransferDto.status ?? TransferStatus.PENDING);
+            newTransfer.setDebitAccount(createTransferDto.description ?? null);
+            newTransfer.setReferenceId(createTransferDto.referenceId ?? null);
+            newTransfer.setProcessedDate(new Date());
+            newTransfer.setCurrency(createTransferDto.currency ?? 'ARS');
             await this._transferDao.save(newTransfer);
             await queryRunner.commitTransaction();
 
@@ -80,15 +89,28 @@ export class TransferService {
     * @param limit Results per page (default: 10)
     * @returns List of transfer DTOs
     */
-    async findAll(query: FindTransferQueryRequest): Promise<TransferResponseDto[]> {
+    async findAll(query: FindTransferQueryRequest): Promise<PaginatedResponseDto<TransferResponseDto>> {
         this._logger.log(`Fetching all transfers - page: ${query.page}, limit: ${query.limit}`);
         try {
-            const transfers: Transfer[] = await this._transferDao.findAll(query.page, query.limit);
-            console.log(transfers);
+            const page = query.page ? parseInt(query.page.toString(), 10) : 0;
+            const limit = query.limit ? parseInt(query.limit.toString(), 10) : 10;
+            const [transfers, totalItems] = await this._transferDao.findAll(page, limit);
             if (!transfers || transfers.length === 0) {
                 throw new HttpCustomException('No transfers found', StatusCodeEnums.NOT_TRANSFERS_FOUND);
             }
-            return transfers.map(transfer => new TransferResponseDto(transfer));
+            const totalPages = Math.ceil(totalItems / limit);
+            const paginationMetadata: IPaginationMetadata = {
+                currentPage: page,
+                pageSize: limit,
+                totalItems: totalItems,
+                totalPages: totalPages,
+                hasNextPage: page < totalPages - 1,
+                hasPreviousPage: page > 0
+            };
+            return new PaginatedResponseDto(
+                transfers.map(transfer => new TransferResponseDto(transfer)),
+                paginationMetadata
+            );
         } catch (error) {
             this._logger.error(`Error finding all transfers: ${error.message}`, error.stack);
             throw error;
@@ -104,10 +126,7 @@ export class TransferService {
         this._logger.log(`Finding transfer by ID: ${id}`);
         try {
             if (!this._isValidId(id)) {
-                throw new HttpCustomException(
-                    'Invalid transfer ID format',
-                    StatusCodeEnums.TRANSFER_NOT_FOUND
-                );
+                throw new HttpCustomException('Invalid transfer ID format', StatusCodeEnums.TRANSFER_NOT_FOUND);
             }
             const transfer: Transfer = await this._transferDao.findById(id);
             if (!transfer) {
@@ -129,24 +148,15 @@ export class TransferService {
         this._logger.log(`Finding transfers for company ID: ${companyId}`);
         try {
             if (!this._isValidId(companyId)) {
-                throw new HttpCustomException(
-                    'Invalid company ID format',
-                    StatusCodeEnums.COMPANY_NOT_FOUND
-                );
+                throw new HttpCustomException('Invalid company ID format', StatusCodeEnums.COMPANY_NOT_FOUND);
             }
             const company = await this._companyDao.findById(companyId);
             if (!company) {
-                throw new HttpCustomException(
-                    `Company with ID ${companyId} not found`,
-                    StatusCodeEnums.COMPANY_NOT_FOUND
-                );
+                throw new HttpCustomException(`Company with ID ${companyId} not found`, StatusCodeEnums.COMPANY_NOT_FOUND);
             }
             const transfers: Transfer[] = await this._transferDao.findByCompanyId(companyId);
             if (!transfers || transfers.length === 0) {
-                throw new HttpCustomException(
-                    'No transfers found for this company',
-                    StatusCodeEnums.NOT_TRANSFERS_FOUND
-                );
+                throw new HttpCustomException('No transfers found for this company', StatusCodeEnums.NOT_TRANSFERS_FOUND);
             }
             return transfers.map(transfer => new TransferResponseDto(transfer));
         } catch (error) {
@@ -162,16 +172,13 @@ export class TransferService {
     async findCompaniesWithTransfersLastMonth(): Promise<CompanyResponseDto[]> {
         this._logger.log('Finding companies with transfers last month');
         try {
-            const companyIds = await this._transferDao.findCompaniesWithTransfersLastMonth();
+            const companyIds: string[] = await this._transferDao.findCompaniesWithTransfersLastMonth();
             if (!companyIds || companyIds.length === 0) {
-                throw new HttpCustomException(
-                    'No companies found with transfers last month',
-                    StatusCodeEnums.NOT_COMPANIES_FOUND
-                );
+                throw new HttpCustomException('No companies found with transfers last month', StatusCodeEnums.NOT_COMPANIES_FOUND);
             }
             const companyPromises = companyIds.map(async (companyId) => {
                 try {
-                    const company = await this._companyDao.findById(companyId);
+                    const company: Company = await this._companyDao.findById(companyId);
                     if (!company) {
                         this._logger.warn(`Company with ID ${companyId} found in transfers but does not exist`);
                         return null;
@@ -184,10 +191,7 @@ export class TransferService {
             });
             const companies = (await Promise.all(companyPromises)).filter(company => company !== null);
             if (companies.length === 0) {
-                throw new HttpCustomException(
-                    'Failed to retrieve companies with transfers last month',
-                    StatusCodeEnums.NOT_COMPANIES_FOUND
-                );
+                throw new HttpCustomException('Failed to retrieve companies with transfers last month', StatusCodeEnums.NOT_COMPANIES_FOUND);
             }
             return companies;
         } catch (error) {

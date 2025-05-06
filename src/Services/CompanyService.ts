@@ -98,46 +98,6 @@ export class CompanyService {
     }
 
     /**
-     * Validates a CUIT format and checksum
-     * @param cuit CUIT to validate
-     * @returns true if valid, false otherwise
-    */
-    private _isValidCuit(cuit: string): boolean {
-        // Clean the CUIT by removing non-digit characters
-        console.log(`Validating CUIT: ${cuit}`);
-        const cleanCuit = cuit.replace(/\D/g, '');
-        console.log(`Cleaned CUIT: ${cleanCuit}`);
-        if (!/^(20|23|24|25|26|27|30|33|34)\d{9}$/.test(cleanCuit)) {
-            return false;
-        }
-
-        // Get the digits
-        const digits = cleanCuit.split('').map(Number);
-        const checkDigit = digits.pop();
-
-        // Apply multipliers
-        const multipliers = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2];
-        let sum = 0;
-        for (let i = 0; i < digits.length; i++) {
-            sum += digits[i] * multipliers[i];
-        }
-
-        // Calculate expected check digit
-        const remainder = sum % 11;
-        let calculatedCheckDigit;
-
-        if (remainder === 0) {
-            calculatedCheckDigit = 0;
-        } else if (remainder === 1) {
-            calculatedCheckDigit = 9; // Special case for CUIT
-        } else {
-            calculatedCheckDigit = 11 - remainder;
-        }
-
-        return calculatedCheckDigit === checkDigit;
-    }
-
-    /**
      * Formats a CUIT consistently (XX-XXXXXXXX-X)
      * @param cuit CUIT to format
      * @returns Formatted CUIT

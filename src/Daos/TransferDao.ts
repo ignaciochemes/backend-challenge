@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 export class TransferDao {
     constructor(
         @InjectRepository(Transfer)
-        private readonly transferRepository: Repository<Transfer>
+        private readonly _transferRepository: Repository<Transfer>
     ) { }
 
     /**
@@ -17,7 +17,7 @@ export class TransferDao {
     * @returns Saved transfer
     */
     async save(transfer: Transfer): Promise<Transfer> {
-        return await this.transferRepository.save(transfer);
+        return await this._transferRepository.save(transfer);
     }
 
     /**
@@ -27,19 +27,18 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findAll(
-        page: number = 0,
-        limit: number = 10
-    ): Promise<Transfer[]> {
-        console.log(`Page: ${page}, Limit: ${limit}`);
-        const query = await this.transferRepository
-            .createQueryBuilder('transfer')
-            .leftJoinAndSelect('transfer.companyId', 'company')
-            .where('transfer.deleted_at IS NULL')
-            .orderBy('transfer.created_at', 'DESC')
-            .skip(page * limit)
-            .take(limit)
-            .getMany();
-        return query;
+        page: number | string = 0,
+        limit: number | string = 10
+    ): Promise<[Transfer[], number]> {
+        const pageNum = typeof page === 'string' ? parseInt(page, 10) : page;
+        const limitNum = typeof limit === 'string' ? parseInt(limit, 10) : limit;
+        return this._transferRepository.findAndCount({
+            where: { deletedAt: null },
+            relations: ['companyId'],
+            order: { createdAt: 'DESC' },
+            skip: pageNum * limitNum,
+            take: limitNum
+        });
     }
 
     /**
@@ -48,8 +47,9 @@ export class TransferDao {
     * @returns Transfer or null
     */
     async findById(id: string): Promise<Transfer | null> {
-        const query = await this.transferRepository
+        const query = await this._transferRepository
             .createQueryBuilder('transfer')
+            .innerJoinAndSelect('transfer.companyId', 'company')
             .where('(transfer.id = :numericId OR transfer.uuid = :uuid)', {
                 numericId: /^\d+$/.test(id) ? parseInt(id, 10) : -1,
                 uuid: id
@@ -64,7 +64,7 @@ export class TransferDao {
     * @returns Total number of transfers
     */
     async count(): Promise<number> {
-        const query = await this.transferRepository
+        const query = await this._transferRepository
             .createQueryBuilder('transfer')
             .where('transfer.deleted_at IS NULL')
             .getCount();
@@ -77,7 +77,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findByCompanyId(companyId: string): Promise<Transfer[]> {
-        const query = await this.transferRepository
+        const query = await this._transferRepository
             .createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.deleted_at IS NULL');
@@ -101,14 +101,16 @@ export class TransferDao {
         const today = new Date();
         const firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const query = await this.transferRepository
+
+        const query = await this._transferRepository
             .createQueryBuilder('transfer')
-            .select('DISTINCT transfer.company_id')
+            .innerJoin('transfer.companyId', 'company')
+            .select('DISTINCT company.uuid', 'uuid')
             .where('transfer.transfer_date >= :startDate', { startDate: firstDayOfLastMonth })
             .andWhere('transfer.transfer_date < :endDate', { endDate: firstDayOfCurrentMonth })
             .andWhere('transfer.deleted_at IS NULL')
             .getRawMany();
-        return query.map(item => item.company_id);
+        return query.map(item => item.uuid);
     }
 
     /**
@@ -118,7 +120,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findByDateRange(startDate: Date, endDate: Date): Promise<Transfer[]> {
-        const query = await this.transferRepository
+        const query = await this._transferRepository
             .createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.transfer_date >= :startDate', { startDate })
@@ -136,7 +138,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findByAmountRange(minAmount: number, maxAmount: number): Promise<Transfer[]> {
-        return await this.transferRepository
+        return await this._transferRepository
             .createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.amount >= :minAmount', { minAmount })
@@ -152,7 +154,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findByStatus(status: TransferStatus): Promise<Transfer[]> {
-        const query = await this.transferRepository.createQueryBuilder('transfer')
+        const query = await this._transferRepository.createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.deleted_at IS NULL')
             .andWhere('transfer.status = :status', { status })
@@ -172,7 +174,7 @@ export class TransferDao {
             return false;
         }
         transfer.deletedAt = new Date();
-        await await this.transferRepository.save(transfer);
+        await await this._transferRepository.save(transfer);
         return true;
     }
 
@@ -192,6 +194,6 @@ export class TransferDao {
             transfer.setProcessedDate(new Date());
         }
 
-        return await this.transferRepository.save(transfer);
+        return await this._transferRepository.save(transfer);
     }
 }
