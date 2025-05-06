@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { TransferDao } from 'src/Daos/TransferDao';
 import { TransferResponseDto } from 'src/Models/Response/TransferController/TransferResponseDto';
 import { CompanyResponseDto } from 'src/Models/Response/CompanyController/CompanyResponseDto';
@@ -8,76 +8,248 @@ import HttpCustomException from 'src/Exceptions/HttpCustomException';
 import { StatusCodeEnums } from 'src/Enums/StatusCodeEnum';
 import { CompanyDao } from 'src/Daos/CompanyDao';
 import GenericResponse from 'src/Models/Response/GenericResponse';
+import { DataSource } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 
 
 @Injectable()
 export class TransferService {
+    private readonly _logger = new Logger(TransferService.name);
+    private readonly _MAX_TRANSFER_AMOUNT = 1000000;
+
     constructor(
         private readonly _transferDao: TransferDao,
         private readonly _companyDao: CompanyDao,
+        private readonly dataSource: DataSource,
     ) { }
 
+    /**
+    * Creates a new transfer with validation and proper transaction handling
+    * @param createTransferDto Transfer data to create
+    * @returns Generic response with success message
+    */
     async createTransfer(createTransferDto: CreateTransferRequestDto): Promise<GenericResponse> {
-        const company = await this._companyDao.findById(createTransferDto.companyId);
-        if (!company) {
-            throw new NotFoundException(`Company with ID ${createTransferDto.companyId} not found`);
+        this._logger.log(`Starting transfer creation process for company ID: ${createTransferDto.companyId}`);
+        this._validateTransferAmount(createTransferDto.amount);
+        this._validateAccountNumbers(createTransferDto.debitAccount, createTransferDto.creditAccount);
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        try {
+            const company = await this._companyDao.findById(createTransferDto.companyId);
+            if (!company) {
+                throw new NotFoundException(`Company with ID ${createTransferDto.companyId} not found`);
+            }
+            const newTransfer = new Transfer();
+            newTransfer.setUuid(uuidv4());
+            newTransfer.setAmount(this._sanitizeAmount(createTransferDto.amount));
+            newTransfer.setCompanyId(company);
+            newTransfer.setDebitAccount(this._sanitizeAccountNumber(createTransferDto.debitAccount));
+            newTransfer.setCreditAccount(this._sanitizeAccountNumber(createTransferDto.creditAccount));
+            newTransfer.setTransferDate(new Date());
+            await this._transferDao.save(newTransfer);
+            await queryRunner.commitTransaction();
+
+            this._logger.log(`Transfer created successfully: ${newTransfer.getUuid()}`);
+            return new GenericResponse('Transfer created successfully');
+
+        } catch (error) {
+            await queryRunner.rollbackTransaction();
+            this._logger.error(`Error creating transfer: ${error.message}`, error.stack);
+
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            throw new HttpCustomException(
+                'Failed to create transfer',
+                StatusCodeEnums.TRANSFER_NOT_FOUND,
+                'Transaction Error',
+                { error: error.message }
+            );
+        } finally {
+            await queryRunner.release();
         }
-        const newTransfer = new Transfer();
-        newTransfer.setAmount(createTransferDto.amount);
-        newTransfer.setCompanyId(company);
-        newTransfer.setDebitAccount(createTransferDto.debitAccount);
-        newTransfer.setCreditAccount(createTransferDto.creditAccount);
-        newTransfer.setTransferDate(new Date());
-        await this._transferDao.save(newTransfer);
-        return new GenericResponse('Transfer created successfully');
     }
 
-    async findAll(): Promise<TransferResponseDto[]> {
-        const transfers: Transfer[] = await this._transferDao.findAll();
-        if (!transfers || transfers.length === 0) {
-            throw new HttpCustomException('No transfers found', StatusCodeEnums.NOT_TRANSFERS_FOUND);
+    /**
+    * Retrieves all transfers with pagination
+    * @param page Page number (default: 1)
+    * @param limit Results per page (default: 10)
+    * @returns List of transfer DTOs
+    */
+    async findAll(page = 1, limit = 10): Promise<TransferResponseDto[]> {
+        this._logger.log(`Fetching all transfers - page: ${page}, limit: ${limit}`);
+        try {
+            const skip = (page - 1) * limit;
+            const transfers: Transfer[] = await this._transferDao.findAll(skip, limit);
+
+            if (!transfers || transfers.length === 0) {
+                throw new HttpCustomException('No transfers found', StatusCodeEnums.NOT_TRANSFERS_FOUND);
+            }
+            return transfers.map(transfer => new TransferResponseDto(transfer));
+        } catch (error) {
+            this._logger.error(`Error finding all transfers: ${error.message}`, error.stack);
+            throw error;
         }
-        let response: TransferResponseDto[] = [];
-        response = transfers.map(transfer => {
-            return new TransferResponseDto(transfer);
-        });
-        return response;
     }
 
+    /**
+    * Finds a transfer by ID with error handling
+    * @param id Transfer ID
+    * @returns Transfer DTO or null
+    */
     async findById(id: string): Promise<TransferResponseDto | null> {
-        const transfer: Transfer = await this._transferDao.findById(id);
-        if (!transfer) {
-            throw new HttpCustomException('Transfer not found', StatusCodeEnums.TRANSFER_NOT_FOUND);
-        }
-        return new TransferResponseDto(transfer);
-    }
-
-    async findByCompanyId(companyId: string): Promise<TransferResponseDto[]> {
-        const transfers: Transfer[] = await this._transferDao.findByCompanyId(companyId);
-        if (!transfers || transfers.length === 0) {
-            throw new HttpCustomException('No transfers found for this company', StatusCodeEnums.NOT_TRANSFERS_FOUND);
-        }
-        let response: TransferResponseDto[] = [];
-        response = transfers.map(transfer => {
+        this._logger.log(`Finding transfer by ID: ${id}`);
+        try {
+            if (!this._isValidId(id)) {
+                throw new HttpCustomException(
+                    'Invalid transfer ID format',
+                    StatusCodeEnums.TRANSFER_NOT_FOUND
+                );
+            }
+            const transfer: Transfer = await this._transferDao.findById(id);
+            if (!transfer) {
+                throw new HttpCustomException('Transfer not found', StatusCodeEnums.TRANSFER_NOT_FOUND);
+            }
             return new TransferResponseDto(transfer);
-        });
-        return response;
+        } catch (error) {
+            this._logger.error(`Error finding transfer by ID: ${error.message}`, error.stack);
+            throw error;
+        }
     }
 
-    async findCompaniesWithTransfersLastMonth(): Promise<CompanyResponseDto[]> {
-        const companyIds = await this._transferDao.findCompaniesWithTransfersLastMonth();
-        if (!companyIds || companyIds.length === 0) {
-            throw new HttpCustomException('No companies found with transfers last month', StatusCodeEnums.NOT_COMPANIES_FOUND);
+    /**
+    * Finds transfers by company ID
+    * @param companyId Company ID
+    * @returns List of transfer DTOs
+    */
+    async findByCompanyId(companyId: string): Promise<TransferResponseDto[]> {
+        this._logger.log(`Finding transfers for company ID: ${companyId}`);
+        try {
+            if (!this._isValidId(companyId)) {
+                throw new HttpCustomException(
+                    'Invalid company ID format',
+                    StatusCodeEnums.COMPANY_NOT_FOUND
+                );
+            }
+            const company = await this._companyDao.findById(companyId);
+            if (!company) {
+                throw new HttpCustomException(
+                    `Company with ID ${companyId} not found`,
+                    StatusCodeEnums.COMPANY_NOT_FOUND
+                );
+            }
+            const transfers: Transfer[] = await this._transferDao.findByCompanyId(companyId);
+            if (!transfers || transfers.length === 0) {
+                throw new HttpCustomException(
+                    'No transfers found for this company',
+                    StatusCodeEnums.NOT_TRANSFERS_FOUND
+                );
+            }
+            return transfers.map(transfer => new TransferResponseDto(transfer));
+        } catch (error) {
+            this._logger.error(`Error finding transfers by company ID: ${error.message}`, error.stack);
+            throw error;
         }
-        const companies: CompanyResponseDto[] = await Promise.all(
-            companyIds.map(async (companyId) => {
-                const company = await this._companyDao.findById(companyId);
-                if (!company) {
-                    throw new HttpCustomException(`Company with ID ${companyId} not found`, StatusCodeEnums.COMPANY_NOT_FOUND);
+    }
+
+    /**
+    * Finds companies with transfers in the last month
+    * @returns List of company DTOs
+    */
+    async findCompaniesWithTransfersLastMonth(): Promise<CompanyResponseDto[]> {
+        this._logger.log('Finding companies with transfers last month');
+        try {
+            const companyIds = await this._transferDao.findCompaniesWithTransfersLastMonth();
+            if (!companyIds || companyIds.length === 0) {
+                throw new HttpCustomException(
+                    'No companies found with transfers last month',
+                    StatusCodeEnums.NOT_COMPANIES_FOUND
+                );
+            }
+            const companyPromises = companyIds.map(async (companyId) => {
+                try {
+                    const company = await this._companyDao.findById(companyId);
+                    if (!company) {
+                        this._logger.warn(`Company with ID ${companyId} found in transfers but does not exist`);
+                        return null;
+                    }
+                    return new CompanyResponseDto(company);
+                } catch (error) {
+                    this._logger.warn(`Error retrieving company ${companyId}: ${error.message}`);
+                    return null;
                 }
-                return new CompanyResponseDto(company);
-            })
-        );
-        return companies;
+            });
+            const companies = (await Promise.all(companyPromises)).filter(company => company !== null);
+            if (companies.length === 0) {
+                throw new HttpCustomException(
+                    'Failed to retrieve companies with transfers last month',
+                    StatusCodeEnums.NOT_COMPANIES_FOUND
+                );
+            }
+            return companies;
+        } catch (error) {
+            this._logger.error(`Error finding companies with transfers last month: ${error.message}`, error.stack);
+            throw error;
+        }
+    }
+
+    /**
+    * Validates transfer amount is within acceptable limits
+    * @param amount Amount to validate
+    */
+    private _validateTransferAmount(amount: number): void {
+        if (amount <= 0) {
+            throw new BadRequestException('Transfer amount must be greater than zero');
+        }
+        if (amount > this._MAX_TRANSFER_AMOUNT) {
+            throw new BadRequestException(`Transfer amount exceeds maximum allowed (${this._MAX_TRANSFER_AMOUNT})`);
+        }
+    }
+
+    /**
+    * Validates account numbers are properly formatted and different from each other
+    * @param debitAccount Debit account number
+    * @param creditAccount Credit account number
+    */
+    private _validateAccountNumbers(debitAccount: string, creditAccount: string): void {
+        if (!/^\d{5,12}$/.test(debitAccount)) {
+            throw new BadRequestException('Debit account must be numeric and between 5-12 digits');
+        }
+        if (!/^\d{5,12}$/.test(creditAccount)) {
+            throw new BadRequestException('Credit account must be numeric and between 5-12 digits');
+        }
+        if (debitAccount === creditAccount) {
+            throw new BadRequestException('Debit and credit accounts cannot be the same');
+        }
+    }
+
+    /**
+    * Sanitizes and formats account number
+    * @param accountNumber Account number to sanitize
+    * @returns Sanitized account number
+    */
+    private _sanitizeAccountNumber(accountNumber: string): string {
+        return accountNumber.replace(/\D/g, '');
+    }
+
+    /**
+    * Sanitizes transfer amount
+    * @param amount Amount to sanitize
+    * @returns Sanitized amount
+    */
+    private _sanitizeAmount(amount: number): number {
+        return Math.round(Math.abs(amount) * 100) / 100;
+    }
+
+    /**
+    * Validates ID format
+    * @param id ID to validate
+    * @returns true if valid, false otherwise
+    */
+    private _isValidId(id: string): boolean {
+        return /^\d+$/.test(id) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
     }
 }
