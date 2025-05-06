@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TransferStatus } from 'src/Enums/TransferStatusEnum';
 import { Transfer } from 'src/Models/Entities/TransferEntity';
@@ -6,8 +6,6 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class TransferDao {
-    private readonly _logger = new Logger(TransferDao.name);
-
     constructor(
         @InjectRepository(Transfer)
         private readonly transferRepository: Repository<Transfer>
@@ -19,8 +17,7 @@ export class TransferDao {
     * @returns Saved transfer
     */
     async save(transfer: Transfer): Promise<Transfer> {
-        this._logger.debug(`Saving transfer for company ID: ${transfer.getCompanyId()?.id}`);
-        return this.transferRepository.save(transfer);
+        return await this.transferRepository.save(transfer);
     }
 
     /**
@@ -30,9 +27,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findAll(skip = 0, take = 10): Promise<Transfer[]> {
-        this._logger.debug(`Finding all transfers - skip: ${skip}, take: ${take}`);
-
-        const query = this.transferRepository
+        const query = await this.transferRepository
             .createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.deleted_at IS NULL')
@@ -49,33 +44,15 @@ export class TransferDao {
     * @returns Transfer or null
     */
     async findById(id: string): Promise<Transfer | null> {
-        this._logger.debug(`Finding transfer by ID: ${id}`);
-        if (/^\d+$/.test(id)) {
-            const numericId = parseInt(id, 10);
-            try {
-                const transfer = await this.transferRepository
-                    .createQueryBuilder('transfer')
-                    .leftJoinAndSelect('transfer.companyId', 'company')
-                    .where('transfer.id = :id', { id: numericId })
-                    .andWhere('transfer.deleted_at IS NULL')
-                    .getOne();
-
-                if (transfer) return transfer;
-            } catch (error) {
-                this._logger.error(`Error finding transfer by numeric ID: ${error.message}`);
-            }
-        }
-        try {
-            return this.transferRepository
-                .createQueryBuilder('transfer')
-                .leftJoinAndSelect('transfer.companyId', 'company')
-                .where('transfer.uuid = :uuid', { uuid: id })
-                .andWhere('transfer.deleted_at IS NULL')
-                .getOne();
-        } catch (error) {
-            this._logger.error(`Error finding transfer by UUID: ${error.message}`);
-            return null;
-        }
+        const query = await this.transferRepository
+            .createQueryBuilder('transfer')
+            .where('(transfer.id = :numericId OR transfer.uuid = :uuid)', {
+                numericId: /^\d+$/.test(id) ? parseInt(id, 10) : -1,
+                uuid: id
+            })
+            .andWhere('transfer.deleted_at IS NULL')
+            .getOne();
+        return query;
     }
 
     /**
@@ -83,7 +60,7 @@ export class TransferDao {
     * @returns Total number of transfers
     */
     async count(): Promise<number> {
-        const query = this.transferRepository
+        const query = await this.transferRepository
             .createQueryBuilder('transfer')
             .where('transfer.deleted_at IS NULL')
             .getCount();
@@ -96,8 +73,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findByCompanyId(companyId: string): Promise<Transfer[]> {
-        this._logger.debug(`Finding transfers by company ID: ${companyId}`);
-        const query = this.transferRepository
+        const query = await this.transferRepository
             .createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.deleted_at IS NULL');
@@ -118,23 +94,16 @@ export class TransferDao {
     * @returns Array of company IDs
     */
     async findCompaniesWithTransfersLastMonth(): Promise<string[]> {
-        this._logger.debug('Finding companies with transfers last month');
-
         const today = new Date();
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const startOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
-        const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59, 999);
-
+        const firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const query = await this.transferRepository
             .createQueryBuilder('transfer')
             .select('DISTINCT transfer.company_id')
-            .innerJoin('transfer.companyId', 'company')
-            .where('transfer.transfer_date >= :startDate', { startDate: startOfLastMonth })
-            .andWhere('transfer.transfer_date <= :endDate', { endDate: endOfLastMonth })
+            .where('transfer.transfer_date >= :startDate', { startDate: firstDayOfLastMonth })
+            .andWhere('transfer.transfer_date < :endDate', { endDate: firstDayOfCurrentMonth })
             .andWhere('transfer.deleted_at IS NULL')
-            .andWhere('transfer.status = :status', { status: TransferStatus.COMPLETED })
             .getRawMany();
-
         return query.map(item => item.company_id);
     }
 
@@ -145,8 +114,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findByDateRange(startDate: Date, endDate: Date): Promise<Transfer[]> {
-        this._logger.debug(`Finding transfers between ${startDate} and ${endDate}`);
-        const query = this.transferRepository
+        const query = await this.transferRepository
             .createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.transfer_date >= :startDate', { startDate })
@@ -164,9 +132,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findByAmountRange(minAmount: number, maxAmount: number): Promise<Transfer[]> {
-        this._logger.debug(`Finding transfers with amount between ${minAmount} and ${maxAmount}`);
-
-        return this.transferRepository
+        return await this.transferRepository
             .createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.amount >= :minAmount', { minAmount })
@@ -182,8 +148,7 @@ export class TransferDao {
     * @returns List of transfers
     */
     async findByStatus(status: TransferStatus): Promise<Transfer[]> {
-        this._logger.debug(`Finding transfers with status: ${status}`);
-        const query = this.transferRepository.createQueryBuilder('transfer')
+        const query = await this.transferRepository.createQueryBuilder('transfer')
             .leftJoinAndSelect('transfer.companyId', 'company')
             .where('transfer.deleted_at IS NULL')
             .andWhere('transfer.status = :status', { status })
@@ -198,13 +163,12 @@ export class TransferDao {
     * @returns Delete result
     */
     async softDelete(id: string): Promise<boolean> {
-        this._logger.debug(`Soft deleting transfer ID: ${id}`);
         const transfer = await this.findById(id);
         if (!transfer) {
             return false;
         }
         transfer.deletedAt = new Date();
-        await this.transferRepository.save(transfer);
+        await await this.transferRepository.save(transfer);
         return true;
     }
 
@@ -215,7 +179,6 @@ export class TransferDao {
     * @returns Updated transfer
     */
     async updateStatus(id: string, status: TransferStatus): Promise<Transfer | null> {
-        this._logger.debug(`Updating transfer ${id} status to ${status}`);
         const transfer = await this.findById(id);
         if (!transfer) {
             return null;
@@ -225,6 +188,6 @@ export class TransferDao {
             transfer.setProcessedDate(new Date());
         }
 
-        return this.transferRepository.save(transfer);
+        return await this.transferRepository.save(transfer);
     }
 }

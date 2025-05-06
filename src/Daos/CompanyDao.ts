@@ -1,12 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Company } from 'src/Models/Entities/CompanyEntity';
 import { Repository } from 'typeorm';
 
 @Injectable()
 export class CompanyDao {
-    private readonly _logger = new Logger(CompanyDao.name);
-
     constructor(
         @InjectRepository(Company)
         private readonly companyRepository: Repository<Company>
@@ -18,7 +16,6 @@ export class CompanyDao {
     * @returns Saved company
     */
     async save(company: Company): Promise<Company> {
-        this._logger.debug(`Saving company with CUIT: ${company.getCuit()}`);
         return this.companyRepository.save(company);
     }
 
@@ -29,7 +26,6 @@ export class CompanyDao {
     * @returns List of companies
     */
     async findAll(skip = 0, take = 10): Promise<Company[]> {
-        this._logger.debug(`Finding all companies - skip: ${skip}, take: ${take}`);
         const query = this.companyRepository
             .createQueryBuilder('company')
             .where('company.deleted_at IS NULL')
@@ -58,31 +54,15 @@ export class CompanyDao {
     * @returns Company or null
     */
     async findById(id: string): Promise<Company | null> {
-        this._logger.debug(`Finding company by ID: ${id}`);
-        if (/^\d+$/.test(id)) {
-            const numericId = parseInt(id, 10);
-            try {
-                const company = await this.companyRepository
-                    .createQueryBuilder('company')
-                    .where('company.id = :id', { id: numericId })
-                    .andWhere('company.deleted_at IS NULL')
-                    .getOne();
-
-                if (company) return company;
-            } catch (error) {
-                this._logger.error(`Error finding company by numeric ID: ${error.message}`);
-            }
-        }
-        try {
-            return this.companyRepository
-                .createQueryBuilder('company')
-                .where('company.uuid = :uuid', { uuid: id })
-                .andWhere('company.deleted_at IS NULL')
-                .getOne();
-        } catch (error) {
-            this._logger.error(`Error finding company by UUID: ${error.message}`);
-            return null;
-        }
+        const query = this.companyRepository
+            .createQueryBuilder('company')
+            .where('(company.id = :numericId OR company.uuid = :uuid)', {
+                numericId: /^\d+$/.test(id) ? parseInt(id, 10) : -1,
+                uuid: id
+            })
+            .andWhere('company.deleted_at IS NULL')
+            .getOne();
+        return query;
     }
 
     /**
@@ -91,7 +71,6 @@ export class CompanyDao {
     * @returns Company or null
     */
     async findByCuit(cuit: string): Promise<Company | null> {
-        this._logger.debug(`Finding company by CUIT: ${cuit}`);
         const query = this.companyRepository
             .createQueryBuilder('company')
             .where('company.cuit = :cuit', { cuit })
@@ -105,20 +84,16 @@ export class CompanyDao {
     * @returns List of companies
     */
     async findCompaniesAdheringLastMonth(): Promise<Company[]> {
-        this._logger.debug('Finding companies adhering last month');
-
         const today = new Date();
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const startOfLastMonth = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
-        const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59, 999);
-
-        return this.companyRepository
+        const firstDayOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const query = this.companyRepository
             .createQueryBuilder('company')
-            .where('company.adhesion_date >= :startDate', { startDate: startOfLastMonth })
-            .andWhere('company.adhesion_date <= :endDate', { endDate: endOfLastMonth })
+            .where('company.adhesion_date >= :startDate', { startDate: firstDayOfLastMonth })
+            .andWhere('company.adhesion_date < :endDate', { endDate: firstDayOfCurrentMonth })
             .andWhere('company.deleted_at IS NULL')
-            .orderBy('company.adhesion_date', 'DESC')
             .getMany();
+        return query;
     }
 
     /**
@@ -127,7 +102,6 @@ export class CompanyDao {
     * @returns Delete result
     */
     async softDelete(id: string): Promise<boolean> {
-        this._logger.debug(`Soft deleting company ID: ${id}`);
         const company = await this.companyRepository
             .createQueryBuilder('company')
             .where('company.id = :id', { id })
@@ -145,7 +119,6 @@ export class CompanyDao {
     * @returns List of companies
     */
     async findByIds(ids: string[]): Promise<Company[]> {
-        this._logger.debug(`Finding companies by IDs: ${ids.join(', ')}`);
         const numericIds = ids.filter(id => /^\d+$/.test(id)).map(id => parseInt(id, 10));
         const uuidIds = ids.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id));
         const query = this.companyRepository
