@@ -8,6 +8,9 @@ COPY . /app/
 COPY docker-entrypoint.sh /app/
 RUN chmod +x /app/docker-entrypoint.sh
 
+COPY seed-data.json /app/
+COPY scripts/copy-seed-data.js /app/scripts/
+
 RUN npm install
 RUN npm run build
 

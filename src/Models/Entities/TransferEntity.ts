@@ -1,7 +1,7 @@
 import { BeforeInsert, BeforeUpdate, Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { GenericTable } from "./GenericTable";
 import { Company } from "./CompanyEntity";
-import { TransferStatus } from "src/Enums/TransferStatusEnum";
+import { TransferStatus } from "../../Enums/TransferStatusEnum";
 
 @Entity()
 export class Transfer extends GenericTable {
@@ -70,6 +70,15 @@ export class Transfer extends GenericTable {
         }
         this.debitAccount = this.debitAccount.replace(/\D/g, '');
         this.creditAccount = this.creditAccount.replace(/\D/g, '');
+        if (this.status && !Object.values(TransferStatus).includes(this.status)) {
+            this.status = TransferStatus.PENDING;
+        }
+        if (
+            (this.status === TransferStatus.COMPLETED || this.status === TransferStatus.FAILED) &&
+            !this.processedDate
+        ) {
+            this.processedDate = new Date();
+        }
     }
 
     public getUuid(): string {

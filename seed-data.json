@@ -1,0 +1,240 @@
+{
+    "companies": [
+        {
+            "uuid": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+            "cuit": "30-71659554-9",
+            "businessName": "TechSolutions SA",
+            "adhesionDate": "2025-04-10T14:30:00.000Z",
+            "address": "Av. Corrientes 1234, CABA",
+            "contactEmail": "info@techsolutions.com",
+            "contactPhone": "11-4567-8901",
+            "isActive": true
+        },
+        {
+            "uuid": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+            "cuit": "30-71123456-7",
+            "businessName": "Constructora del Sur SRL",
+            "adhesionDate": "2025-04-15T10:15:00.000Z",
+            "address": "Av. Rivadavia 9876, CABA",
+            "contactEmail": "contacto@constructoradelsur.com",
+            "contactPhone": "11-2345-6789",
+            "isActive": true
+        },
+        {
+            "uuid": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+            "cuit": "30-70987654-3",
+            "businessName": "Distribuidora Norte SA",
+            "adhesionDate": "2025-03-05T09:45:00.000Z",
+            "address": "Av. San Martín 4567, Córdoba",
+            "contactEmail": "ventas@disnorte.com",
+            "contactPhone": "351-456-7890",
+            "isActive": true
+        },
+        {
+            "uuid": "6ba7b812-9dad-11d1-80b4-00c04fd430c8",
+            "cuit": "30-71234567-8",
+            "businessName": "Agro Pampa SRL",
+            "adhesionDate": "2025-03-20T11:30:00.000Z",
+            "address": "Ruta 9 Km 45, Buenos Aires",
+            "contactEmail": "info@agropampa.com",
+            "contactPhone": "2323-45-6789",
+            "isActive": true
+        },
+        {
+            "uuid": "6ba7b813-9dad-11d1-80b4-00c04fd430c8",
+            "cuit": "30-71345678-9",
+            "businessName": "Logística Express SA",
+            "adhesionDate": "2025-04-25T16:20:00.000Z",
+            "address": "Ruta 7 Km 32, Mendoza",
+            "contactEmail": "operaciones@logisticaexpress.com",
+            "contactPhone": "261-789-0123",
+            "isActive": true
+        },
+        {
+            "uuid": "6ba7b814-9dad-11d1-80b4-00c04fd430c8",
+            "cuit": "30-71456789-0",
+            "businessName": "Industrias Metálicas SRL",
+            "adhesionDate": "2025-02-10T08:45:00.000Z",
+            "address": "Calle Industrial 123, Rosario",
+            "contactEmail": "ventas@indmetalicas.com",
+            "contactPhone": "341-234-5678",
+            "isActive": true
+        },
+        {
+            "uuid": "6ba7b815-9dad-11d1-80b4-00c04fd430c8",
+            "cuit": "30-71567890-1",
+            "businessName": "Software Solutions SA",
+            "adhesionDate": "2025-02-15T13:30:00.000Z",
+            "address": "Av. Colón 567, Córdoba",
+            "contactEmail": "info@softwaresolutions.com",
+            "contactPhone": "351-678-9012",
+            "isActive": true
+        },
+        {
+            "uuid": "6ba7b816-9dad-11d1-80b4-00c04fd430c8",
+            "cuit": "30-71678901-2",
+            "businessName": "Transporte Rápido SRL",
+            "adhesionDate": "2025-03-30T14:15:00.000Z",
+            "address": "Av. Juan B. Justo 789, CABA",
+            "contactEmail": "logistica@transporterapido.com",
+            "contactPhone": "11-5678-9012",
+            "isActive": true
+        }
+    ],
+    "transfers": [
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440000",
+            "amount": 25000.50,
+            "companyUuid": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+            "debitAccount": "123456789012",
+            "creditAccount": "098765432109",
+            "transferDate": "2025-04-20T10:30:00.000Z",
+            "status": "completed",
+            "description": "Pago de servicios IT mensuales",
+            "referenceId": "REF-IT-20250420",
+            "processedDate": "2025-04-20T10:35:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440001",
+            "amount": 18750.75,
+            "companyUuid": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+            "debitAccount": "123456789012",
+            "creditAccount": "345678901234",
+            "transferDate": "2025-04-25T14:15:00.000Z",
+            "status": "completed",
+            "description": "Pago a proveedores",
+            "referenceId": "REF-PROV-20250425",
+            "processedDate": "2025-04-25T14:20:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440002",
+            "amount": 35000.00,
+            "companyUuid": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "234567890123",
+            "creditAccount": "456789012345",
+            "transferDate": "2025-04-22T09:45:00.000Z",
+            "status": "completed",
+            "description": "Pago de materiales de construcción",
+            "referenceId": "REF-MAT-20250422",
+            "processedDate": "2025-04-22T09:50:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440003",
+            "amount": 12500.25,
+            "companyUuid": "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "234567890123",
+            "creditAccount": "567890123456",
+            "transferDate": "2025-04-28T11:30:00.000Z",
+            "status": "pending",
+            "description": "Anticipo a contratistas",
+            "referenceId": "REF-CONT-20250428",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440004",
+            "amount": 42000.00,
+            "companyUuid": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "345678901234",
+            "creditAccount": "678901234567",
+            "transferDate": "2025-03-10T13:20:00.000Z",
+            "status": "completed",
+            "description": "Pago a proveedores mayoristas",
+            "referenceId": "REF-MAY-20250310",
+            "processedDate": "2025-03-10T13:25:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440005",
+            "amount": 28750.50,
+            "companyUuid": "6ba7b811-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "345678901234",
+            "creditAccount": "789012345678",
+            "transferDate": "2025-03-25T15:10:00.000Z",
+            "status": "completed",
+            "description": "Pago de fletes",
+            "referenceId": "REF-FLE-20250325",
+            "processedDate": "2025-03-25T15:15:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440006",
+            "amount": 56000.00,
+            "companyUuid": "6ba7b812-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "456789012345",
+            "creditAccount": "890123456789",
+            "transferDate": "2025-04-05T10:45:00.000Z",
+            "status": "completed",
+            "description": "Compra de insumos agrícolas",
+            "referenceId": "REF-AGR-20250405",
+            "processedDate": "2025-04-05T10:50:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440007",
+            "amount": 19800.25,
+            "companyUuid": "6ba7b812-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "456789012345",
+            "creditAccount": "901234567890",
+            "transferDate": "2025-04-15T09:30:00.000Z",
+            "status": "failed",
+            "description": "Pago de servicios de fumigación",
+            "referenceId": "REF-FUM-20250415",
+            "processedDate": "2025-04-15T09:35:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440008",
+            "amount": 32500.00,
+            "companyUuid": "6ba7b814-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "567890123456",
+            "creditAccount": "012345678901",
+            "transferDate": "2025-02-20T14:30:00.000Z",
+            "status": "completed",
+            "description": "Compra de materia prima",
+            "referenceId": "REF-MAT-20250220",
+            "processedDate": "2025-02-20T14:35:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440009",
+            "amount": 48750.50,
+            "companyUuid": "6ba7b815-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "678901234567",
+            "creditAccount": "123456789012",
+            "transferDate": "2025-02-25T11:15:00.000Z",
+            "status": "completed",
+            "description": "Pago de licencias de software",
+            "referenceId": "REF-LIC-20250225",
+            "processedDate": "2025-02-25T11:20:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440010",
+            "amount": 21000.00,
+            "companyUuid": "6ba7b816-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "789012345678",
+            "creditAccount": "234567890123",
+            "transferDate": "2025-04-02T16:45:00.000Z",
+            "status": "completed",
+            "description": "Pago de combustible",
+            "referenceId": "REF-COM-20250402",
+            "processedDate": "2025-04-02T16:50:00.000Z",
+            "currency": "ARS"
+        },
+        {
+            "uuid": "550e8400-e29b-41d4-a716-446655440011",
+            "amount": 15000.75,
+            "companyUuid": "6ba7b816-9dad-11d1-80b4-00c04fd430c8",
+            "debitAccount": "789012345678",
+            "creditAccount": "345678901234",
+            "transferDate": "2025-04-18T13:30:00.000Z",
+            "status": "pending",
+            "description": "Mantenimiento de vehículos",
+            "referenceId": "REF-MAN-20250418",
+            "currency": "ARS"
+        }
+    ]
+}

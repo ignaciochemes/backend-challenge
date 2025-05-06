@@ -21,7 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "typeorm-ts-node-commonjs -d ./ormconfig.ts",
     "typeorm:dev": "BC_ENV=dev typeorm-ts-node-commonjs -d ./ormconfig.ts",
-    "typeorm:local": "BC_ENV=local typeorm-ts-node-commonjs -d ./ormconfig.ts"
+    "typeorm:local": "BC_ENV=local typeorm-ts-node-commonjs -d ./ormconfig.ts",
+    "copy-seed-data": "node scripts/copy-seed-data.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

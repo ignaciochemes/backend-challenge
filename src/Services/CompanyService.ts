@@ -148,13 +148,4 @@ export class CompanyService {
             .replace(/"/g, '&quot;')
             .replace(/;/g, '&#59;');
     }
-
-    /**
-     * Validates company ID format
-     * @param id ID to validate
-     * @returns true if valid, false otherwise
-    */
-    private _isValidId(id: string): boolean {
-        return /^\d+$/.test(id) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-    }
 }
