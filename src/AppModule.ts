@@ -5,6 +5,8 @@ import { DBConfigInterface } from './Configs/DbConfigInterface';
 import { ApplicationModule } from './Modules/AplicationModule';
 import { nestEnvConfiguration } from './Configs/NestEnvConfig';
 import { envFilePathConfiguration } from './Configs/EnvFilePathConfig';
+import { APP_FILTER } from '@nestjs/core';
+import { QueryFailedErrorFilter } from './Helpers/Middlewares/QueryFailedErrorFilter';
 
 @Module({
     imports: [
@@ -20,6 +22,6 @@ import { envFilePathConfiguration } from './Configs/EnvFilePathConfig';
         }),
         ApplicationModule,
     ],
-
+    providers: [{ provide: APP_FILTER, useClass: QueryFailedErrorFilter }],
 })
 export class AppModule { }

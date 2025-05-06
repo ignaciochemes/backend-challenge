@@ -1,0 +1,287 @@
+{
+    "info": {
+        "_postman_id": "1c5ca3d5-4bad-4b8c-bb9c-9f5f5d35f8d2",
+        "name": "Backend Challenge API",
+        "description": "Collection for testing the Backend Challenge API endpoints",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Companies",
+            "item": [
+                {
+                    "name": "Get All Companies",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/companies",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "companies"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page number (default: 1)",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "Items per page (default: 10)",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Get all companies with optional pagination"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Company by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/companies/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "companies",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "Company ID (numeric) or UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get a company by its ID or UUID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Companies Adhering Last Month",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/companies/adhering/last-month",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "companies",
+                                "adhering",
+                                "last-month"
+                            ]
+                        },
+                        "description": "Get companies that adhered (joined) in the last month"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Company",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"cuit\": \"30-71659554-9\",\n    \"businessName\": \"New Company SRL\",\n    \"address\": \"Av. Corrientes 1234, CABA\",\n    \"contactEmail\": \"info@newcompany.com\",\n    \"contactPhone\": \"11-4567-8901\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/companies",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "companies"
+                            ]
+                        },
+                        "description": "Create a new company (adhesion)"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoints for company management"
+        },
+        {
+            "name": "Transfers",
+            "item": [
+                {
+                    "name": "Get All Transfers",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transfers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transfers"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Page number (default: 1)",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10",
+                                    "description": "Items per page (default: 10)",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "Get all transfers with optional pagination"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Transfer by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transfers/:id",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transfers",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "Transfer ID (numeric) or UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get a transfer by its ID or UUID"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Transfers by Company ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transfers/company/:companyId",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transfers",
+                                "company",
+                                ":companyId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "companyId",
+                                    "value": "1",
+                                    "description": "Company ID (numeric) or UUID"
+                                }
+                            ]
+                        },
+                        "description": "Get all transfers for a specific company"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Companies with Transfers Last Month",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transfers/companies/last-month",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transfers",
+                                "companies",
+                                "last-month"
+                            ]
+                        },
+                        "description": "Get companies that made transfers in the last month"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Transfer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"amount\": 5000.50,\n    \"companyId\": \"1\",\n    \"debitAccount\": \"123456789012\",\n    \"creditAccount\": \"987654321098\",\n    \"description\": \"Payment for services\",\n    \"referenceId\": \"REF-TEST-001\",\n    \"currency\": \"ARS\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transfers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "transfers"
+                            ]
+                        },
+                        "description": "Create a new transfer"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "Endpoints for transfer management"
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:33000/api/v1/backend-challenge",
+            "type": "string",
+            "description": "Base URL for the API"
+        }
+    ]
+}

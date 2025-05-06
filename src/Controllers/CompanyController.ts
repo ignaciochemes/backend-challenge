@@ -1,7 +1,8 @@
-import { Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseInterceptors, UsePipes, ValidationPipe } from "@nestjs/common";
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import ResponseFormatter from "src/Helpers/Formatter/ResponseFormatter";
 import { LoggingInterceptor } from "src/Helpers/Interceptors/LogginInterceptor";
+import { CreateCompanyRequestDto } from "src/Models/Request/CompanyController/CreateCompanyRequestDto";
 import { CompanyResponseDto } from "src/Models/Response/CompanyController/CompanyResponseDto";
 import GenericResponse from "src/Models/Response/GenericResponse";
 import { CompanyService } from "src/Services/CompanyService";
@@ -19,7 +20,9 @@ export class CompanyController {
     @ApiResponse({ status: HttpStatus.CREATED, description: 'Company created successfully' })
     @ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
     @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Company with this CUIT already exists' })
-    async createCompany(data: any): Promise<ResponseFormatter<GenericResponse>> {
+    async createCompany(
+        @Body() data: CreateCompanyRequestDto
+    ): Promise<ResponseFormatter<GenericResponse>> {
         const response: GenericResponse = await this._companyService.createCompany(data);
         return ResponseFormatter.create<GenericResponse>(response);
     }
